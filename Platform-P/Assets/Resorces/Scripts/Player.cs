@@ -1,66 +1,60 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Playables;
-public enum StatePlayer
-{
-    Normal,
-    Wallslide,
-    Ledgegrab
-}
+using UnityEngine.U2D.Animation;
 public class Player : MonoBehaviour
 {
-    public StatePlayer PlayerState;
+    private enum StatePlayer
+    {
+        Normal,
+        Wallslide,
+        Ledgegrab
+    }
+    private StatePlayer PlayerState;
     private Rigidbody2D rB2d;
     private Vector2 Movement;
     private float Speed = 5.0f;
     private int jumpCount = 0;
     private int jumpMax = 1;
     private float jumpForce = 10.0f;
-    private bool isGrounded = false;
+    public bool isGrounded = false;
     private float coyoteTime =0.5f;
     [SerializeField] private GameObject CamPos;
-    [SerializeField] private Walls tempDisableWall;
+    private Walls tempDisableWall;
     private bool slide = false;
-    private Camera cam;
+    [SerializeField] private Animator Animation;
     private void Start()
     {
         rB2d = GetComponent<Rigidbody2D>();
-        cam = Camera.main;
     }
-    private void OnCollisionStay2D(Collision2D collision)
+
+    public void JumpAble()
     {
-        if (collision.transform.CompareTag("Ground"))
+        jumpCount = 0;
+        isGrounded = true;
+        coyoteTime = 0.25f;
+        if (PlayerState == StatePlayer.Normal && tempDisableWall != null)
         {
-            jumpCount = 0;
-            isGrounded = true;
-            coyoteTime = 0.25f;
-            if (PlayerState == StatePlayer.Normal&& tempDisableWall!=null)
-            {
-                tempDisableWall = null;
-            }
-        }
-    }
-    private void OnCollisionExit2D(Collision2D collision)
-    {
-        if (collision.transform.CompareTag("Ground"))
-        {
-            isGrounded = false;
+            tempDisableWall = null;
         }
     }
     private void Move()
     {
+        Movement.x = Input.GetAxis("Horizontal");
+        bool sprint = Input.GetKey(KeyCode.LeftShift);
         if (PlayerState == StatePlayer.Normal)
         {
-            Movement.x = Input.GetAxis("Horizontal");
+            Speed = sprint ? 7 : 5;
             rB2d.linearVelocity = new Vector2(Movement.x * Speed, rB2d.linearVelocity.y);
         }
     }
     private void Jumping()
     {
+        bool jumpAction = Input.GetKeyDown(KeyCode.W);
         switch (PlayerState)
         {
             case  StatePlayer.Normal:
-                if ((Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.Space)) && (coyoteTime > 0 || jumpCount < jumpMax))
+                if (jumpAction && (coyoteTime > 0 || jumpCount < jumpMax))
                 {
                     rB2d.linearVelocity = new Vector2(rB2d.linearVelocity.x, jumpForce);
                     if (coyoteTime < 0)
@@ -78,7 +72,7 @@ public class Player : MonoBehaviour
                 }
                 break;
             case  StatePlayer.Wallslide:
-                if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.Space))
+                if (jumpAction)
                 {
                     jumpCount = 0;
                     rB2d.linearVelocity = new Vector2(rB2d.linearVelocity.x, jumpForce);
@@ -88,7 +82,7 @@ public class Player : MonoBehaviour
                 break;
             case  StatePlayer.Ledgegrab:
                 LedgeGrab();
-                if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.Space))
+                if (jumpAction)
                 {
                     transform.position = transform.position + Vector3.right * (tempDisableWall.side*0.25f);
                     jumpCount = 0;
@@ -113,18 +107,50 @@ public class Player : MonoBehaviour
         {
             yCam = rB2d.linearVelocity.y;
         }
-        Vector3 newPos = new Vector3(transform.position.x + Movement.x*Speed, transform.position.y+ yCam, transform.position.z);
+        Vector3 addPos = new Vector3(Movement.x * Speed, yCam, -10);
+        Vector3 newPos = transform.position+ addPos;
+        
         float dis = Vector3.Distance(CamPos.transform.position, newPos);
         if (dis>1)
         {
-            CamPos.transform.position = Vector3.MoveTowards(CamPos.transform.position, newPos, dis*Time.deltaTime);
+            CamPos.transform.position = Vector3.MoveTowards(CamPos.transform.position, newPos, dis*dis*Time.deltaTime);
+        }
+        else
+        {
+            CamPos.transform.position = Vector3.MoveTowards(CamPos.transform.position, newPos, dis * Time.deltaTime);
         }
     }
-    private void ScreenShake()
+    private void animation()
     {
+        if(PlayerState==StatePlayer.Normal)
+        {
+            if (rB2d.linearVelocity.x > 0.1f)
+            {
+                GetComponentInChildren<SpriteRenderer>().flipX = false;
+            }
+            else if (rB2d.linearVelocity.x < -0.1f)
+            {
+                GetComponentInChildren<SpriteRenderer>().flipX = true;
+            }
+        }
 
+        if (!isGrounded)
+        {
+            Animation.Play("PlayerJump");
+            //jump animation
+        }
+        else if (Input.GetKey(KeyCode.A)||Input.GetKey(KeyCode.D))
+        {
+            Animation.Play("PlayerMove");
+            //move animation
+        }
+        else
+        {
+            Animation.Play("PlayerIdle");
+            //Idle
+        }
     }
-    private void CheckWallLeft()
+    private void CheckWalls()
     {
         RaycastHit2D hitLeft = Physics2D.Raycast(transform.position, Vector2.left, 0.8f, LayerMask.GetMask("Ground"));
         RaycastHit2D hitRight = Physics2D.Raycast(transform.position, Vector2.right, 0.8f, LayerMask.GetMask("Ground"));
@@ -202,10 +228,11 @@ public class Player : MonoBehaviour
         /*
          To do
         */
-        CheckWallLeft();
+        CheckWalls();
         Move();
         Jumping();
-        Cam();
+        //Cam();
+        animation();
         /*
         Done
         Left/Right movement
