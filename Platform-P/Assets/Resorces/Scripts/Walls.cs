@@ -6,6 +6,7 @@ public class Walls : MonoBehaviour
     public int side = 0;
     public GameObject RightSide;
     public GameObject LeftSide;
+    public bool ledgeGrabed;
     void Start()
     {
         player = FindFirstObjectByType<Player>();

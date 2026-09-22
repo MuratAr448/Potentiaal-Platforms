@@ -1,4 +1,5 @@
 using System.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.U2D.Animation;
@@ -16,13 +17,20 @@ public class Player : MonoBehaviour
     private float Speed = 5.0f;
     private int jumpCount = 0;
     private int jumpMax = 1;
-    private float jumpForce = 10.0f;
+    private float jumpForce = 12.5f;
     public bool isGrounded = false;
-    private float coyoteTime =0.5f;
+    private float coyoteTime = 0.5f;
     [SerializeField] private GameObject CamPos;
     private Walls tempDisableWall;
     private bool slide = false;
     [SerializeField] private Animator Animation;
+    [SerializeField] private GameObject sword;
+    private bool cooldown = true;
+
+    private bool crit = false;
+    private int attackStat = 3;
+
+
     private void Start()
     {
         rB2d = GetComponent<Rigidbody2D>();
@@ -35,6 +43,7 @@ public class Player : MonoBehaviour
         coyoteTime = 0.25f;
         if (PlayerState == StatePlayer.Normal && tempDisableWall != null)
         {
+            tempDisableWall.ledgeGrabed = false;
             tempDisableWall = null;
         }
     }
@@ -53,9 +62,10 @@ public class Player : MonoBehaviour
         bool jumpAction = Input.GetKeyDown(KeyCode.W);
         switch (PlayerState)
         {
-            case  StatePlayer.Normal:
+            case StatePlayer.Normal:
                 if (jumpAction && (coyoteTime > 0 || jumpCount < jumpMax))
                 {
+                    StartCoroutine(Jumped());
                     rB2d.linearVelocity = new Vector2(rB2d.linearVelocity.x, jumpForce);
                     if (coyoteTime < 0)
                     {
@@ -71,21 +81,21 @@ public class Player : MonoBehaviour
                     coyoteTime -= Time.deltaTime;
                 }
                 break;
-            case  StatePlayer.Wallslide:
+            case StatePlayer.Wallslide:
                 if (jumpAction)
                 {
-                    jumpCount = 0;
+                    StartCoroutine(Jumped());
                     rB2d.linearVelocity = new Vector2(rB2d.linearVelocity.x, jumpForce);
                     PlayerState = StatePlayer.Normal;
                     slide = false;
                 }
                 break;
-            case  StatePlayer.Ledgegrab:
+            case StatePlayer.Ledgegrab:
                 LedgeGrab();
                 if (jumpAction)
                 {
-                    transform.position = transform.position + Vector3.right * (tempDisableWall.side*0.25f);
-                    jumpCount = 0;
+                    StartCoroutine(Jumped());
+                    transform.position = transform.position + Vector3.right * (tempDisableWall.side * 0.35f);
                     rB2d.linearVelocity = new Vector2(rB2d.linearVelocity.x, jumpForce);
                     PlayerState = StatePlayer.Normal;
                 }
@@ -94,35 +104,64 @@ public class Player : MonoBehaviour
         }
 
     }
+    private IEnumerator Jumped()
+    {
+        rB2d.gravityScale = 1;
+
+        while (isGrounded)
+        {
+            yield return new WaitForSeconds(Time.deltaTime);
+        }
+
+        while (!isGrounded)
+        {
+            yield return new WaitForSeconds(Time.deltaTime);
+            if (PlayerState != StatePlayer.Wallslide)
+            {
+                if (rB2d.gravityScale < 3)
+                {
+                    rB2d.gravityScale += 0.02f;
+                }
+                else
+                {
+                    StopCoroutine(Jumped());
+                }
+            }
+            else
+            {
+                rB2d.gravityScale = 1;
+            }
+        }
+    }
     private void Cam()
     {
         float yCam = 0f;
-        if (rB2d.linearVelocity.y<-5)
+        if (rB2d.linearVelocity.y < -5)
         {
             yCam = -5f;
-        }else if (rB2d.linearVelocity.y>5)
+        } else if (rB2d.linearVelocity.y > 5)
         {
             yCam = 5;
-        }else
+        } else
         {
             yCam = rB2d.linearVelocity.y;
         }
         Vector3 addPos = new Vector3(Movement.x * Speed, yCam, -10);
-        Vector3 newPos = transform.position+ addPos;
-        
+        Vector3 newPos = transform.position + addPos;
+
         float dis = Vector3.Distance(CamPos.transform.position, newPos);
-        if (dis>1)
+        if (dis > 1)
         {
-            CamPos.transform.position = Vector3.MoveTowards(CamPos.transform.position, newPos, dis*dis*Time.deltaTime);
+            CamPos.transform.position = Vector3.MoveTowards(CamPos.transform.position, newPos, dis * dis * Time.deltaTime);
         }
         else
         {
             CamPos.transform.position = Vector3.MoveTowards(CamPos.transform.position, newPos, dis * Time.deltaTime);
         }
     }
-    private void animation()
+    private void Animate()
     {
-        if(PlayerState==StatePlayer.Normal)
+        if (PlayerState == StatePlayer.Normal)
         {
             if (rB2d.linearVelocity.x > 0.1f)
             {
@@ -139,7 +178,7 @@ public class Player : MonoBehaviour
             Animation.Play("PlayerJump");
             //jump animation
         }
-        else if (Input.GetKey(KeyCode.A)||Input.GetKey(KeyCode.D))
+        else if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.D))
         {
             Animation.Play("PlayerMove");
             //move animation
@@ -155,15 +194,22 @@ public class Player : MonoBehaviour
         RaycastHit2D hitLeft = Physics2D.Raycast(transform.position, Vector2.left, 0.8f, LayerMask.GetMask("Ground"));
         RaycastHit2D hitRight = Physics2D.Raycast(transform.position, Vector2.right, 0.8f, LayerMask.GetMask("Ground"));
 
-        if (hitLeft.transform!=null&&PlayerState == StatePlayer.Normal)
+        if (hitLeft.transform != null && PlayerState == StatePlayer.Normal)
         {
             if (hitLeft.transform.parent.TryGetComponent(out Walls walls))
             {
-                if (walls!=tempDisableWall)
+                if (walls != tempDisableWall)
                 {
+                    jumpCount = 0;
+                    if (tempDisableWall != null)
+                    {
+                        tempDisableWall.ledgeGrabed = false;
+                    }
+
                     tempDisableWall = walls;
                     if (hitLeft.collider.name == "Ledge")
                     {
+                        tempDisableWall.ledgeGrabed = true;
                         PlayerState = StatePlayer.Ledgegrab;
                         transform.position = walls.RightSide.transform.position;
                     }
@@ -173,17 +219,32 @@ public class Player : MonoBehaviour
                         PlayerState = StatePlayer.Wallslide;
                         StartCoroutine(SlideDown(walls.RightSide.transform.position));
                     }
+                } else if (!tempDisableWall.ledgeGrabed)
+                {
+                    if (hitLeft.collider.name == "Ledge")
+                    {
+                        tempDisableWall.ledgeGrabed = true;
+                        PlayerState = StatePlayer.Ledgegrab;
+                        transform.position = walls.RightSide.transform.position;
+                    }
                 }
             }
-        }else if (hitRight.transform != null && PlayerState == StatePlayer.Normal)
+        } else if (hitRight.transform != null && PlayerState == StatePlayer.Normal)
         {
             if (hitRight.transform.parent.TryGetComponent(out Walls walls))
             {
                 if (walls != tempDisableWall)
                 {
+                    jumpCount = 0;
+                    if (tempDisableWall != null)
+                    {
+                        tempDisableWall.ledgeGrabed = false;
+                    }
+
                     tempDisableWall = walls;
                     if (hitRight.collider.name == "Ledge")
                     {
+                        tempDisableWall.ledgeGrabed = true;
                         PlayerState = StatePlayer.Ledgegrab;
                         transform.position = walls.LeftSide.transform.position;
                     }
@@ -194,27 +255,36 @@ public class Player : MonoBehaviour
                         StartCoroutine(SlideDown(walls.LeftSide.transform.position));
                     }
                 }
+                else if (!tempDisableWall.ledgeGrabed)
+                {
+                    if (hitRight.collider.name == "Ledge")
+                    {
+                        tempDisableWall.ledgeGrabed = true;
+                        PlayerState = StatePlayer.Ledgegrab;
+                        transform.position = walls.LeftSide.transform.position;
+                    }
+                }
             }
         }
     }
     private IEnumerator SlideDown(Vector3 slidePos)
     {
-        transform.position = new Vector3(slidePos.x, transform.position.y-Time.deltaTime, slidePos.z);
+        transform.position = new Vector3(slidePos.x, transform.position.y - Time.deltaTime, slidePos.z);
         RaycastHit2D hitLeft = Physics2D.Raycast(transform.position, Vector2.left, 0.8f, LayerMask.GetMask("Ground"));
         RaycastHit2D hitRight = Physics2D.Raycast(transform.position, Vector2.right, 0.8f, LayerMask.GetMask("Ground"));
-        bool stillWallslide = hitLeft ==true || hitRight ==true;
+        bool stillWallslide = hitLeft == true || hitRight == true;
         yield return new WaitForSeconds(Time.deltaTime);
-        if (stillWallslide&& slide)
+        if (stillWallslide && slide)
         {
             StartCoroutine(SlideDown(new Vector3(slidePos.x, transform.position.y, slidePos.z)));
-        }else
+        } else
         {
             PlayerState = StatePlayer.Normal;
         }
     }
     private void LedgeGrab()
     {
-        if (tempDisableWall.side==1)
+        if (tempDisableWall.side == 1)
         {
             transform.position = tempDisableWall.RightSide.transform.position;
         }
@@ -222,6 +292,51 @@ public class Player : MonoBehaviour
         {
             transform.position = tempDisableWall.LeftSide.transform.position;
         }
+    }
+    private IEnumerator Attacking()
+    {
+        cooldown = false;
+        int rand = Random.Range(0, 5);
+        crit = rand == 0 ? true : false;
+        sword.SetActive(true);
+        PlayerAttack playerAttack = FindFirstObjectByType<PlayerAttack>();
+        if (crit)
+        {
+            playerAttack.transform.tag = "Crit";
+        }
+        
+        float diretion = 1;
+        if (GetComponentInChildren<SpriteRenderer>().flipX)
+        {
+            sword.transform.Rotate(new Vector3(0, 0, diretion * 90));
+            diretion = -1;
+        }
+        for (int i = 0; i < 90; i++)
+        {
+            yield return new WaitForSeconds(Time.deltaTime*0.1f);
+            sword.transform.Rotate(new Vector3(0, 0, -diretion));
+        }
+        playerAttack.transform.tag = "NoCrit";
+        sword.SetActive(false);
+        sword.transform.rotation = Quaternion.identity;
+        
+        cooldown = true;
+    }
+    public IEnumerator HitAttack(Enemy enemy)
+    {
+        int currentAttack = attackStat;
+        float hitSchake = 0.01f;
+        if (crit)
+        {
+            currentAttack *= 2;
+            hitSchake *= 20;
+        }
+        Time.timeScale = 0;
+        
+        yield return new WaitForSecondsRealtime(hitSchake);
+        enemy.TakeDamage(currentAttack);
+        Time.timeScale = 1;
+        
     }
     private void Update()
     {
@@ -232,7 +347,11 @@ public class Player : MonoBehaviour
         Move();
         Jumping();
         //Cam();
-        animation();
+        Animate();
+        if (Input.GetMouseButtonDown(0)&& cooldown)
+        {
+            StartCoroutine (Attacking());
+        }
         /*
         Done
         Left/Right movement
