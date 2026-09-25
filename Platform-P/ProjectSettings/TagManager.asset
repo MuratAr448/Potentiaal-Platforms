@@ -8,8 +8,6 @@ TagManager:
   - Wall
   - Ledge
   - Enemy
-  - Crit
-  - NoCrit
   layers:
   - Default
   - TransparentFX
@@ -20,7 +18,7 @@ TagManager:
   - Ground
   - PlayerAttack
   - EnemyAttack
-  - 
+  - Enemy
   - 
   - 
   - 

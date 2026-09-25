@@ -1,8 +1,12 @@
+using NUnit.Framework;
 using System.Collections;
+using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.U2D.Animation;
+using UnityEngine.UIElements;
+using UnityEngine.XR;
 public class Player : MonoBehaviour
 {
     private enum StatePlayer
@@ -27,9 +31,8 @@ public class Player : MonoBehaviour
     [SerializeField] private GameObject sword;
     private bool cooldown = true;
 
-    private bool crit = false;
     private int attackStat = 3;
-
+    private List<Enemy> enemys = new List<Enemy>();
 
     private void Start()
     {
@@ -163,11 +166,11 @@ public class Player : MonoBehaviour
     {
         if (PlayerState == StatePlayer.Normal)
         {
-            if (rB2d.linearVelocity.x > 0.1f)
+            if (Movement.x > 0.1f)
             {
                 GetComponentInChildren<SpriteRenderer>().flipX = false;
             }
-            else if (rB2d.linearVelocity.x < -0.1f)
+            else if (Movement.x < -0.1f)
             {
                 GetComponentInChildren<SpriteRenderer>().flipX = true;
             }
@@ -178,7 +181,7 @@ public class Player : MonoBehaviour
             Animation.Play("PlayerJump");
             //jump animation
         }
-        else if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.D))
+        else if ((Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.D))&&(rB2d.linearVelocityX>0.1f|| rB2d.linearVelocityX< -0.1f))
         {
             Animation.Play("PlayerMove");
             //move animation
@@ -194,7 +197,7 @@ public class Player : MonoBehaviour
         RaycastHit2D hitLeft = Physics2D.Raycast(transform.position, Vector2.left, 0.8f, LayerMask.GetMask("Ground"));
         RaycastHit2D hitRight = Physics2D.Raycast(transform.position, Vector2.right, 0.8f, LayerMask.GetMask("Ground"));
 
-        if (hitLeft.transform != null && PlayerState == StatePlayer.Normal)
+        if (hitLeft.transform != null && PlayerState == StatePlayer.Normal&&!isGrounded)
         {
             if (hitLeft.transform.parent.TryGetComponent(out Walls walls))
             {
@@ -211,13 +214,13 @@ public class Player : MonoBehaviour
                     {
                         tempDisableWall.ledgeGrabed = true;
                         PlayerState = StatePlayer.Ledgegrab;
-                        transform.position = walls.RightSide.transform.position;
+                        transform.position = walls.transform.position + Vector3.right * walls.side;
                     }
                     else
                     {
                         slide = true;
                         PlayerState = StatePlayer.Wallslide;
-                        StartCoroutine(SlideDown(walls.RightSide.transform.position));
+                        StartCoroutine(SlideDown(walls.transform.position + Vector3.right * walls.side));
                     }
                 } else if (!tempDisableWall.ledgeGrabed)
                 {
@@ -225,11 +228,12 @@ public class Player : MonoBehaviour
                     {
                         tempDisableWall.ledgeGrabed = true;
                         PlayerState = StatePlayer.Ledgegrab;
-                        transform.position = walls.RightSide.transform.position;
+                        transform.position = walls.transform.position + Vector3.right * walls.side;
                     }
                 }
             }
-        } else if (hitRight.transform != null && PlayerState == StatePlayer.Normal)
+        } 
+        else if (hitRight.transform != null && PlayerState == StatePlayer.Normal && !isGrounded)
         {
             if (hitRight.transform.parent.TryGetComponent(out Walls walls))
             {
@@ -246,13 +250,13 @@ public class Player : MonoBehaviour
                     {
                         tempDisableWall.ledgeGrabed = true;
                         PlayerState = StatePlayer.Ledgegrab;
-                        transform.position = walls.LeftSide.transform.position;
+                        transform.position = walls.transform.position + Vector3.right * walls.side;
                     }
                     else
                     {
                         slide = true;
                         PlayerState = StatePlayer.Wallslide;
-                        StartCoroutine(SlideDown(walls.LeftSide.transform.position));
+                        StartCoroutine(SlideDown(walls.transform.position + Vector3.right * walls.side));
                     }
                 }
                 else if (!tempDisableWall.ledgeGrabed)
@@ -261,7 +265,7 @@ public class Player : MonoBehaviour
                     {
                         tempDisableWall.ledgeGrabed = true;
                         PlayerState = StatePlayer.Ledgegrab;
-                        transform.position = walls.LeftSide.transform.position;
+                        transform.position = walls.transform.position + Vector3.right * walls.side;
                     }
                 }
             }
@@ -286,57 +290,63 @@ public class Player : MonoBehaviour
     {
         if (tempDisableWall.side == 1)
         {
-            transform.position = tempDisableWall.RightSide.transform.position;
+            transform.position = tempDisableWall.transform.position + Vector3.right * tempDisableWall.side;
         }
         else
         {
-            transform.position = tempDisableWall.LeftSide.transform.position;
+            transform.position = tempDisableWall.transform.position + Vector3.right * tempDisableWall.side;
         }
     }
     private IEnumerator Attacking()
     {
+        float attackTime = 0.6f;
         cooldown = false;
-        int rand = Random.Range(0, 5);
-        crit = rand == 0 ? true : false;
+
+        if (!GetComponentInChildren<SpriteRenderer>().flipX)
+        {
+            sword.transform.position = transform.position+Vector3.right;
+            sword.GetComponent<SpriteRenderer>().flipX = false;
+        }else
+        {
+            sword.transform.position = transform.position + Vector3.left;
+            sword.GetComponent<SpriteRenderer>().flipX = true;
+        }
         sword.SetActive(true);
-        PlayerAttack playerAttack = FindFirstObjectByType<PlayerAttack>();
-        if (crit)
-        {
-            playerAttack.transform.tag = "Crit";
-        }
         
-        float diretion = 1;
-        if (GetComponentInChildren<SpriteRenderer>().flipX)
-        {
-            sword.transform.Rotate(new Vector3(0, 0, diretion * 90));
-            diretion = -1;
-        }
-        for (int i = 0; i < 90; i++)
-        {
-            yield return new WaitForSeconds(Time.deltaTime*0.1f);
-            sword.transform.Rotate(new Vector3(0, 0, -diretion));
-        }
-        playerAttack.transform.tag = "NoCrit";
+        yield return new WaitForSeconds(attackTime);
+
         sword.SetActive(false);
-        sword.transform.rotation = Quaternion.identity;
         
         cooldown = true;
+        if (enemys != null)
+        {
+            enemys.Clear();
+        }
     }
     public IEnumerator HitAttack(Enemy enemy)
     {
-        int currentAttack = attackStat;
-        float hitSchake = 0.01f;
-        if (crit)
+        if (!enemys.Contains(enemy))
         {
-            currentAttack *= 2;
-            hitSchake *= 20;
+            int currentAttack = attackStat;
+            float hitSchake = 0.01f;
+            int rand = Random.Range(0, 5);
+            bool crit = rand == 0 ? true : false;
+            if (crit)
+            {
+                currentAttack *= 2;
+                hitSchake *= 20;
+            }
+
+            Time.timeScale = 0;
+
+            yield return new WaitForSecondsRealtime(hitSchake);
+
+            enemy.TakeDamage(currentAttack);
+            enemys.Add(enemy);
+
+            Time.timeScale = 1;
         }
-        Time.timeScale = 0;
-        
-        yield return new WaitForSecondsRealtime(hitSchake);
-        enemy.TakeDamage(currentAttack);
-        Time.timeScale = 1;
-        
+
     }
     private void Update()
     {
@@ -344,13 +354,13 @@ public class Player : MonoBehaviour
          To do
         */
         CheckWalls();
-        Move();
+        
         Jumping();
         //Cam();
         Animate();
         if (Input.GetMouseButtonDown(0)&& cooldown)
         {
-            StartCoroutine (Attacking());
+            StartCoroutine(Attacking());
         }
         /*
         Done
@@ -360,5 +370,9 @@ public class Player : MonoBehaviour
         LedgeGrab
         Wallslide/Walljump 
          */
+    }
+    private void FixedUpdate()
+    {
+        Move();
     }
 }

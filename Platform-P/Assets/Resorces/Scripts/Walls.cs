@@ -4,8 +4,6 @@ public class Walls : MonoBehaviour
 {
     private Player player;
     public int side = 0;
-    public GameObject RightSide;
-    public GameObject LeftSide;
     public bool ledgeGrabed;
     void Start()
     {
