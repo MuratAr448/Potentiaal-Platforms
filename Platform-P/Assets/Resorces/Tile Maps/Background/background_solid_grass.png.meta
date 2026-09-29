@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 294c8c6f029678048b53c9e8abf56733
+guid: 7b293f3a8a448614ca0cdc7d48b86817
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -3208371983909987399
-    second: background_color_hills_0
+      213: -1964278295639965801
+    second: background_solid_grass_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -128,7 +128,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: background_color_hills_0
+      name: background_solid_grass_0
       rect:
         serializedVersion: 2
         x: 0
@@ -143,8 +143,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 9bbdab7eda29973d0800000000000000
-      internalID: -3208371983909987399
+      spriteID: 79fbe5c1c4b7db4e0800000000000000
+      internalID: -1964278295639965801
       vertices: []
       indices: 
       edges: []
@@ -163,7 +163,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      background_color_hills_0: -3208371983909987399
+      background_solid_grass_0: -1964278295639965801
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

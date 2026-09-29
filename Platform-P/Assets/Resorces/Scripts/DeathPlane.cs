@@ -4,6 +4,6 @@ public class DeathPlane : MonoBehaviour
 {
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        collision.transform.position = Vector3.zero;
+        collision.transform.position = Vector3.zero+Vector3.down;
     }
 }

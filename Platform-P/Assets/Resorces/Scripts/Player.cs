@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Cinemachine;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Playables;
@@ -24,6 +25,7 @@ public class Player : MonoBehaviour
     private float jumpForce = 12.5f;
     public bool isGrounded = false;
     private float coyoteTime = 0.5f;
+
     [SerializeField] private GameObject CamPos;
     private Walls tempDisableWall;
     private bool slide = false;
@@ -33,6 +35,11 @@ public class Player : MonoBehaviour
 
     private int attackStat = 3;
     private List<Enemy> enemys = new List<Enemy>();
+
+    private int MaxHealth = 6;
+    private int health = 6;
+    public List<SpriteRenderer> Hearts;
+    public List<Sprite> HeartsSprites;
 
     private void Start()
     {
@@ -56,7 +63,10 @@ public class Player : MonoBehaviour
         bool sprint = Input.GetKey(KeyCode.LeftShift);
         if (PlayerState == StatePlayer.Normal)
         {
-            Speed = sprint ? 7 : 5;
+            if (isGrounded)
+            {
+                Speed = sprint ? 10 : 5;
+            }
             rB2d.linearVelocity = new Vector2(Movement.x * Speed, rB2d.linearVelocity.y);
         }
     }
@@ -136,32 +146,6 @@ public class Player : MonoBehaviour
             }
         }
     }
-    private void Cam()
-    {
-        float yCam = 0f;
-        if (rB2d.linearVelocity.y < -5)
-        {
-            yCam = -5f;
-        } else if (rB2d.linearVelocity.y > 5)
-        {
-            yCam = 5;
-        } else
-        {
-            yCam = rB2d.linearVelocity.y;
-        }
-        Vector3 addPos = new Vector3(Movement.x * Speed, yCam, -10);
-        Vector3 newPos = transform.position + addPos;
-
-        float dis = Vector3.Distance(CamPos.transform.position, newPos);
-        if (dis > 1)
-        {
-            CamPos.transform.position = Vector3.MoveTowards(CamPos.transform.position, newPos, dis * dis * Time.deltaTime);
-        }
-        else
-        {
-            CamPos.transform.position = Vector3.MoveTowards(CamPos.transform.position, newPos, dis * Time.deltaTime);
-        }
-    }
     private void Animate()
     {
         if (PlayerState == StatePlayer.Normal)
@@ -220,6 +204,7 @@ public class Player : MonoBehaviour
                     {
                         slide = true;
                         PlayerState = StatePlayer.Wallslide;
+                        rB2d.linearVelocity = Vector2.zero;
                         StartCoroutine(SlideDown(walls.transform.position + Vector3.right * walls.side));
                     }
                 } else if (!tempDisableWall.ledgeGrabed)
@@ -301,7 +286,6 @@ public class Player : MonoBehaviour
     {
         float attackTime = 0.6f;
         cooldown = false;
-
         if (!GetComponentInChildren<SpriteRenderer>().flipX)
         {
             sword.transform.position = transform.position+Vector3.right;
@@ -316,12 +300,12 @@ public class Player : MonoBehaviour
         yield return new WaitForSeconds(attackTime);
 
         sword.SetActive(false);
-        
-        cooldown = true;
         if (enemys != null)
         {
             enemys.Clear();
         }
+        cooldown = true;
+
     }
     public IEnumerator HitAttack(Enemy enemy)
     {
@@ -336,9 +320,8 @@ public class Player : MonoBehaviour
                 currentAttack *= 2;
                 hitSchake *= 20;
             }
-
             Time.timeScale = 0;
-
+            
             yield return new WaitForSecondsRealtime(hitSchake);
 
             enemy.TakeDamage(currentAttack);
@@ -348,28 +331,19 @@ public class Player : MonoBehaviour
         }
 
     }
+    private void UIShow()
+    {
+
+    }
     private void Update()
     {
-        /*
-         To do
-        */
         CheckWalls();
-        
         Jumping();
-        //Cam();
         Animate();
         if (Input.GetMouseButtonDown(0)&& cooldown)
         {
             StartCoroutine(Attacking());
         }
-        /*
-        Done
-        Left/Right movement
-        jump
-        Double jump
-        LedgeGrab
-        Wallslide/Walljump 
-         */
     }
     private void FixedUpdate()
     {

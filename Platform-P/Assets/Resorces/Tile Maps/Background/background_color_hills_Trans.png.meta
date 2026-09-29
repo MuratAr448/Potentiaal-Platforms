@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 294c8c6f029678048b53c9e8abf56733
+guid: cbeff853318319d44addae910b2e73e8
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -3208371983909987399
-    second: background_color_hills_0
+      213: -8830227076715545942
+    second: background_color_hills_alpha_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -99,7 +99,7 @@ TextureImporter:
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 4
-    buildTarget: WebGL
+    buildTarget: Android
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
@@ -112,7 +112,7 @@ TextureImporter:
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 4
-    buildTarget: Android
+    buildTarget: WebGL
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
@@ -128,13 +128,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: background_color_hills_0
+      name: background_color_hills_alpha_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
         width: 256
-        height: 256
+        height: 127
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -143,8 +143,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 9bbdab7eda29973d0800000000000000
-      internalID: -3208371983909987399
+      spriteID: aaa755e124bb47580800000000000000
+      internalID: -8830227076715545942
       vertices: []
       indices: 
       edges: []
@@ -163,7 +163,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      background_color_hills_0: -3208371983909987399
+      background_color_hills_alpha_0: -8830227076715545942
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

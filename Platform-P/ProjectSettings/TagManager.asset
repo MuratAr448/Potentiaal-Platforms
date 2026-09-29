@@ -45,6 +45,27 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: Sky
+    uniqueID: 3598568863
+    locked: 0
+  - name: Ground
+    uniqueID: 1888562745
+    locked: 0
+  - name: White Screen
+    uniqueID: 4102074857
+    locked: 0
+  - name: Clouds
+    uniqueID: 838956101
+    locked: 0
+  - name: Lite background
+    uniqueID: 1851058643
+    locked: 0
+  - name: Background
+    uniqueID: 3429455307
+    locked: 0
+  - name: Player
+    uniqueID: 1303126483
+    locked: 0
   m_RenderingLayers:
   - Default
   m_MigratedRenderPipelines: []

@@ -3,7 +3,7 @@ using UnityEngine;
 public class Walls : MonoBehaviour
 {
     private Player player;
-    public int side = 0;
+    public float side = 0;
     public bool ledgeGrabed;
     void Start()
     {
@@ -15,11 +15,11 @@ public class Walls : MonoBehaviour
         {
             if (player.transform.position.x > transform.position.x)
             {
-                side = 1;
+                side = 1f;
             }
             else
             {
-                side = -1;
+                side = -1f;
             }
         }
     }

@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 294c8c6f029678048b53c9e8abf56733
+guid: 48073dece342a3c42b2d1bd666bf4c22
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -3208371983909987399
-    second: background_color_hills_0
+      213: 9179172765007742821
+    second: background_solid_cloud_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -128,7 +128,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: background_color_hills_0
+      name: background_solid_cloud_0
       rect:
         serializedVersion: 2
         x: 0
@@ -143,8 +143,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 9bbdab7eda29973d0800000000000000
-      internalID: -3208371983909987399
+      spriteID: 5670a361ff8f26f70800000000000000
+      internalID: 9179172765007742821
       vertices: []
       indices: 
       edges: []
@@ -163,7 +163,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      background_color_hills_0: -3208371983909987399
+      background_solid_cloud_0: 9179172765007742821
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
