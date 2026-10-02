@@ -6,7 +6,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.U2D.Animation;
-using UnityEngine.UIElements;
+using UnityEngine.UI;
 using UnityEngine.XR;
 public class Player : MonoBehaviour
 {
@@ -37,8 +37,8 @@ public class Player : MonoBehaviour
     private List<Enemy> enemys = new List<Enemy>();
 
     private int MaxHealth = 6;
-    private int health = 6;
-    public List<SpriteRenderer> Hearts;
+    public int health = 6;
+    public List<Image> Hearts;
     public List<Sprite> HeartsSprites;
 
     private void Start()
@@ -333,10 +333,33 @@ public class Player : MonoBehaviour
     }
     private void UIShow()
     {
-
+        for (int i = 0; i < Hearts.Count; i++)
+        {
+            if (health >= 2 + i + i)
+            {
+                Hearts[i].sprite = HeartsSprites[0];
+            }
+            else if (health == 1 + i + i) 
+            {
+                Hearts[i].sprite = HeartsSprites[1];
+            }
+            else
+            {
+                Hearts[i].sprite = HeartsSprites[2];
+            }
+        }
+    }
+    public void TakeDamage(int damage)
+    {
+        health -= damage;
+        if (health <= 0)
+        {
+            //dead
+        }
     }
     private void Update()
     {
+        UIShow();
         CheckWalls();
         Jumping();
         Animate();
