@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using Unity.Cinemachine;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -19,7 +20,7 @@ public class Player : MonoBehaviour
     private StatePlayer PlayerState;
     private Rigidbody2D rB2d;
     private Vector2 Movement;
-    private float Speed = 5.0f;
+    private float speed = 5.0f;
     private int jumpCount = 0;
     private int jumpMax = 1;
     private float jumpForce = 12.5f;
@@ -36,10 +37,15 @@ public class Player : MonoBehaviour
     private int attackStat = 3;
     private List<Enemy> enemys = new List<Enemy>();
 
-    private int MaxHealth = 6;
+    private int maxHealth = 6;
     public int health = 6;
     public List<Image> Hearts;
-    public List<Sprite> HeartsSprites;
+
+    public int coins = 0;
+    public TextMeshProUGUI coinText;
+
+    private float iFrames = 1f;
+    private float iFrameTimer = 0;
 
     private void Start()
     {
@@ -65,9 +71,9 @@ public class Player : MonoBehaviour
         {
             if (isGrounded)
             {
-                Speed = sprint ? 10 : 5;
+                speed = sprint ? 10 : 7;
             }
-            rB2d.linearVelocity = new Vector2(Movement.x * Speed, rB2d.linearVelocity.y);
+            rB2d.linearVelocity = new Vector2(Movement.x * speed, rB2d.linearVelocity.y);
         }
     }
     private void Jumping()
@@ -148,15 +154,25 @@ public class Player : MonoBehaviour
     }
     private void Animate()
     {
+        SpriteRenderer PlayerSprite = GetComponentInChildren<SpriteRenderer>();
+        if (iFrameTimer<=iFrames)
+        {
+            PlayerSprite.enabled = !PlayerSprite.enabled;
+        }
+        else
+        {
+            PlayerSprite.enabled = true;
+        }
+
         if (PlayerState == StatePlayer.Normal)
         {
             if (Movement.x > 0.1f)
             {
-                GetComponentInChildren<SpriteRenderer>().flipX = false;
+                PlayerSprite.flipX = false;
             }
             else if (Movement.x < -0.1f)
             {
-                GetComponentInChildren<SpriteRenderer>().flipX = true;
+                PlayerSprite.flipX = true;
             }
         }
 
@@ -312,13 +328,13 @@ public class Player : MonoBehaviour
         if (!enemys.Contains(enemy))
         {
             int currentAttack = attackStat;
-            float hitSchake = 0.01f;
+            float hitSchake = 0.05f;
             int rand = Random.Range(0, 5);
             bool crit = rand == 0 ? true : false;
             if (crit)
             {
                 currentAttack *= 2;
-                hitSchake *= 20;
+                hitSchake *= 5;
             }
             Time.timeScale = 0;
             
@@ -326,6 +342,15 @@ public class Player : MonoBehaviour
 
             enemy.TakeDamage(currentAttack);
             enemys.Add(enemy);
+            if (Movement.x > 0.1f)
+            {
+                enemy.rB2d.AddForce(new Vector2(currentAttack * 100, hitSchake * 100));
+            }
+            else
+            {
+                enemy.rB2d.AddForce(new Vector2(-currentAttack*100, hitSchake * 100));
+            }
+            
 
             Time.timeScale = 1;
         }
@@ -335,27 +360,50 @@ public class Player : MonoBehaviour
     {
         for (int i = 0; i < Hearts.Count; i++)
         {
+            Animator Heartbounce = Hearts[i].GetComponent<Animator>();
             if (health >= 2 + i + i)
             {
-                Hearts[i].sprite = HeartsSprites[0];
+                //Heartbounce.Play("Full health");
+                Heartbounce.SetInteger("Health", 2);
             }
             else if (health == 1 + i + i) 
             {
-                Hearts[i].sprite = HeartsSprites[1];
+                //Heartbounce.Play("Damaged");
+                Heartbounce.SetInteger("Health", 1);
             }
             else
             {
-                Hearts[i].sprite = HeartsSprites[2];
+                //Heartbounce.Play("No Life");
+                Heartbounce.SetInteger("Health", 0);
             }
         }
+        coinText.text = coins.ToString();
     }
     public void TakeDamage(int damage)
     {
-        health -= damage;
-        if (health <= 0)
+        if (iFrameTimer>=iFrames)
         {
-            //dead
+            health -= damage;
+            if (health <= 0)
+            {
+                Debug.Log("dead");
+            }
+            iFrameTimer = 0;
         }
+    }
+    public void GainHealth(int HP, GameObject gB)
+    {
+        health += HP;
+        if (health > maxHealth)
+        {
+            health = maxHealth;
+        }
+        Destroy(gB);
+    }
+    public void GainCoins(int Coin, GameObject gB)
+    {
+        coins += Coin;
+        Destroy(gB);
     }
     private void Update()
     {
@@ -367,6 +415,7 @@ public class Player : MonoBehaviour
         {
             StartCoroutine(Attacking());
         }
+        iFrameTimer += Time.deltaTime;
     }
     private void FixedUpdate()
     {
