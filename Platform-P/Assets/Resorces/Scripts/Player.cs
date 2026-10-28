@@ -31,7 +31,7 @@ public class Player : MonoBehaviour
     private Walls tempDisableWall;
     private bool slide = false;
     [SerializeField] private Animator Animation;
-    [SerializeField] private GameObject sword;
+    [SerializeField] private GameObject attack;
     private bool cooldown = true;
 
     private int attackStat = 3;
@@ -302,20 +302,19 @@ public class Player : MonoBehaviour
     {
         float attackTime = 0.6f;
         cooldown = false;
+        GameObject Attack = Instantiate(attack, attack.transform.position, attack.transform.rotation,null);
         if (!GetComponentInChildren<SpriteRenderer>().flipX)
         {
-            sword.transform.position = transform.position+Vector3.right;
-            sword.GetComponent<SpriteRenderer>().flipX = false;
+            Attack.transform.position = transform.position+Vector3.right * 1.75f;
+            Attack.GetComponent<SpriteRenderer>().flipY = false;
         }else
         {
-            sword.transform.position = transform.position + Vector3.left;
-            sword.GetComponent<SpriteRenderer>().flipX = true;
+            Attack.transform.position = transform.position + Vector3.left*1.75f;
+            Attack.GetComponent<SpriteRenderer>().flipY = true;
         }
-        sword.SetActive(true);
         
         yield return new WaitForSeconds(attackTime);
 
-        sword.SetActive(false);
         if (enemys != null)
         {
             enemys.Clear();
@@ -342,13 +341,13 @@ public class Player : MonoBehaviour
 
             enemy.TakeDamage(currentAttack);
             enemys.Add(enemy);
-            if (Movement.x > 0.1f)
+            if (!GetComponentInChildren<SpriteRenderer>().flipX)
             {
-                enemy.rB2d.AddForce(new Vector2(currentAttack * 100, hitSchake * 100));
+                enemy.rB2d.AddForce(new Vector2(200, hitSchake * 100));
             }
             else
             {
-                enemy.rB2d.AddForce(new Vector2(-currentAttack*100, hitSchake * 100));
+                enemy.rB2d.AddForce(new Vector2(-200, hitSchake * 100));
             }
             
 

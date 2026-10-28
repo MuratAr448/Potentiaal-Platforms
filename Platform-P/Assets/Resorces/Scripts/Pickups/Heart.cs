@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class Heart : MonoBehaviour
 {
+    private bool pickedUp = false;
     private Player player;
     [SerializeField] private int heal;
     private void Start()
@@ -10,12 +11,12 @@ public class Heart : MonoBehaviour
     }
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        Debug.Log(collision);
-        if (collision.transform.CompareTag("Player"))
+        if (collision.transform.CompareTag("Player") && !pickedUp)
         {
             player.GainHealth(heal,gameObject);
+            gameObject.SetActive(false);
+            Destroy(gameObject, 1);
+            pickedUp = true;
         }
-        gameObject.SetActive(false);
-        Destroy(gameObject,1);
     }
 }

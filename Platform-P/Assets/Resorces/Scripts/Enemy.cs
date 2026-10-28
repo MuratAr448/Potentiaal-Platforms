@@ -15,6 +15,7 @@ public class Enemy : MonoBehaviour
     public float speed;
     private bool isGrounded = true;
     private bool isJumping = false;
+    [SerializeField] private float iFrames = 0;
     private void Start()
     {
         rB2d = GetComponent<Rigidbody2D>();
@@ -41,58 +42,81 @@ public class Enemy : MonoBehaviour
     public void TakeDamage(int Pdamage)
     {
         Pdamage -= def;
-        if (Pdamage >= 0)
+        if (Pdamage >= 0&& iFrames<0)
         {
             health -= Pdamage;
+            if (health < 0)
+            {
+                Dead();
+            }
+            iFrames = 0.6f;
         }
+    }
+    private void Dead()
+    {
+        Destroy(gameObject);
     }
     private void FixedUpdate()
     {
         Movement();
     }
+    private void Update()
+    {
+        IFrames();
+    }
+    private void IFrames()
+    {
+        if (iFrames >=0)
+        {
+            iFrames -= Time.deltaTime;
+        }
+    }
     private void Movement()
     {
-        int direction = 0;
-        SpriteRenderer sprite = GetComponentInChildren<SpriteRenderer>();
-        if (!turned)
+        if (iFrames < 0)
         {
-            sprite.flipX = true;
-            direction = 1;
-        }
-        else
-        {
-            sprite.flipX = false;
-            direction = -1;
-        }
-        RaycastHit2D hit2D = Physics2D.Raycast(new Vector2(transform.position.x,transform.position.y) + Vector2.right * direction, Vector2.down,1);
-        if (hit2D.collider != null)
-        {
-            if (hit2D.transform.CompareTag("Ground"))
+            int direction = 0;
+            SpriteRenderer sprite = GetComponentInChildren<SpriteRenderer>();
+            if (!turned)
             {
-                rB2d.linearVelocity = new Vector2(speed * direction, rB2d.linearVelocity.y);
+                sprite.flipX = true;
+                direction = 1;
             }
-            else if (hit2D.transform.CompareTag("Player"))
+            else
             {
-                if (!isJumping)
+                sprite.flipX = false;
+                direction = -1;
+            }
+            RaycastHit2D hit2D = Physics2D.Raycast(new Vector2(transform.position.x, transform.position.y) + Vector2.right * direction, Vector2.down, 1);
+            if (hit2D.collider != null)
+            {
+                if (hit2D.transform.CompareTag("Ground"))
+                {
+                    rB2d.linearVelocity = new Vector2(speed * direction, rB2d.linearVelocity.y);
+                }
+                else if (hit2D.transform.CompareTag("Player") && !isJumping)
                 {
                     StartCoroutine(JumpAttack(direction));
                 }
             }
-        }
-        else if (isGrounded)
-        {
-            turned = !turned;
+            else if (isGrounded)
+            {
+                turned = !turned;
+            }
         }
     }
     private IEnumerator JumpAttack(int direction)
     {
-        isJumping = true;
-        rB2d.linearVelocity = new Vector2(speed * direction, 5);
-        yield return new WaitForSeconds(Time.deltaTime);
-        while (!isGrounded)
+        if (iFrames < 0)
         {
+            isJumping = true;
+            rB2d.linearVelocity = new Vector2(speed * direction, 5);
             yield return new WaitForSeconds(Time.deltaTime);
+            while (!isGrounded)
+            {
+                yield return new WaitForSeconds(Time.deltaTime);
+            }
+            isJumping = false;
         }
-        isJumping = false;
     }
 }

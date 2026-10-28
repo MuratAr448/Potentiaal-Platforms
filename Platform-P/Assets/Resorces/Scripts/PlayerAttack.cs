@@ -3,10 +3,12 @@ using UnityEngine;
 
 public class PlayerAttack : MonoBehaviour
 {
-    private Player player;
+    public Player player;
     private void Start()
     {
-        player = GetComponentInParent<Player>();
+        player = FindFirstObjectByType<Player>();
+        AnimationClip clip = GetComponent<Animation>().clip;
+        Destroy(gameObject,clip.length);
     }
     private void OnTriggerEnter2D(Collider2D collision)
     {
